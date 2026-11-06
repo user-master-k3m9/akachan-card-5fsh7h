@@ -18,7 +18,7 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif}
-button,input,textarea{font:inherit;color:inherit}
+button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer;touch-action:manipulation}
 #app{max-width:1100px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
 .top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;min-height:52px;padding:calc(6px + env(safe-area-inset-top)) 0 6px;background:var(--bg)}
@@ -82,6 +82,8 @@ h2{margin:20px 0 8px;font-size:16px}
 label.f{display:block;margin:12px 0 4px;font-size:14px;font-weight:700}
 textarea,input[type=text]{display:block;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
 textarea{min-height:68px;resize:vertical}
+select{display:block;width:100%;min-height:48px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
+.vrow{display:flex;gap:8px;align-items:center}.vrow select{flex:1;min-width:0}.vrow .link{width:auto;margin-top:0;padding:0 14px;flex:none}
 .tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .sw{width:44px;height:44px;padding:0;border:3px solid var(--line);border-radius:50%}
 .sw.on{border-color:var(--main);box-shadow:0 0 0 2px var(--main)}
@@ -116,7 +118,7 @@ body.show #app{padding:0;max-width:none}
 <script>
 (function(){
 "use strict";
-const VER="v4";
+const VER="v5";
 const KEY="babycards-v1";
 const app=document.getElementById("app");
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -125,7 +127,7 @@ const today=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+
 const jpDate=s=>{const a=String(s).split("-");return a.length===3?Number(a[1])+"月"+Number(a[2])+"日":s};
 
 /* ---------- 保存（記録はlocalStorage、書き込みと自作カードはIndexedDB） ---------- */
-const DEFAULTS={stage:1,log:{},react:{},memo:{},days:{},autoSpeak:false,penOnly:false,penSeen:false,todaySet:null,enLog:{},enGoal:120,enOnly:false,birth:"",srs:{},grades:[],planN:0,planNote:"",planEase:false,enStep:0,enEval:"",sceneLog:{},usePhoto:true};
+const DEFAULTS={stage:1,log:{},react:{},memo:{},days:{},autoSpeak:false,penOnly:false,penSeen:false,todaySet:null,enLog:{},enGoal:120,enOnly:false,birth:"",srs:{},grades:[],planN:0,planNote:"",planEase:false,enStep:0,enEval:"",sceneLog:{},usePhoto:true,vEn:"",vJa:"",enRate:.9};
 let store=Object.assign({},DEFAULTS);
 try{const raw=localStorage.getItem(KEY);if(raw)store=Object.assign({},DEFAULTS,JSON.parse(raw))}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
@@ -247,19 +249,48 @@ function spoken(c){
   if(!c.on||c.on.indexOf(c.w)>=0)return c.on||c.w;
   return c.w+"、"+c.on;
 }
-function utter(text,lang,re){
+/* 声の選び方：ふざけた声・低品質の声を避け、Premium＞Enhanced＞よく知られた自然な声の順 */
+const ODD=/albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|hysterical|deranged|pipe|novelty/i;
+const GOOD={en:/ava|samantha|allison|susan|zoe|evan|nathan|joelle|nicky|tom|serena|karen|daniel|moira/i,ja:/kyoko|o-ren|otoya|hattori|sakura/i};
+function voicesFor(k){
+  let vs=[];try{vs=speechSynthesis.getVoices()}catch(e){}
+  const re=k==="en"?/^en[-_]/i:/^ja[-_]/i;
+  return vs.filter(v=>re.test(v.lang)&&!ODD.test(v.name)).map(v=>{
+    const n=(v.name+" "+v.voiceURI).toLowerCase();let sc=0;
+    if(/premium/.test(n))sc+=40;else if(/enhanced|neural|natural/.test(n))sc+=25;
+    if(GOOD[k].test(v.name))sc+=10;
+    if(k==="en"&&/en[-_]us/i.test(v.lang))sc+=6;
+    if(/compact|eloquence/.test(n))sc-=20;
+    if(/google/.test(n))sc+=8;
+    return {v,sc};
+  }).sort((a,b)=>b.sc-a.sc).map(x=>x.v);
+}
+function pickVoice(k){
+  const want=store[k==="en"?"vEn":"vJa"],vs=voicesFor(k);
+  return (want&&vs.find(v=>v.voiceURI===want))||vs[0]||null;
+}
+try{speechSynthesis.addEventListener("voiceschanged",()=>{if(view.name==="rec")render()})}catch(e){}
+function utter(text,k){
   const u=new SpeechSynthesisUtterance(text);
-  u.lang=lang;u.rate=.8;u.pitch=1.15;
-  const vs=speechSynthesis.getVoices(),v=vs.find(x=>x.lang.replace("_","-")===lang)||vs.find(x=>re.test(x.lang));
-  if(v)u.voice=v;
+  u.lang=k==="en"?"en-US":"ja-JP";
+  u.rate=k==="en"?(store.enRate||.9):.95;u.pitch=1;
+  const v=pickVoice(k);if(v){u.voice=v;u.lang=v.lang.replace("_","-")}
   speechSynthesis.speak(u);
 }
-function speak(c,enOnly){  // 日本語→英語の順に続けて読む
+let spT=0;
+function talk(list){  // 前の読み上げを止めてから、少し間をあけて話し始める（iPhoneで頭が切れる・つかえるのを防ぐ）
   try{
-    speechSynthesis.cancel();
-    if(!enOnly&&!store.enOnly)utter(spoken(c).replace(/…/g,"、"),"ja-JP",/^ja/i);
-    if(c.en)utter(c.en,"en-US",/^en/i);
+    clearTimeout(spT);
+    const go=()=>{try{list.forEach(([t,k])=>utter(t,k))}catch(e){}};
+    if(speechSynthesis.speaking||speechSynthesis.pending){speechSynthesis.cancel();spT=setTimeout(go,150)}
+    else{speechSynthesis.cancel();go()}
   }catch(e){}
+}
+function speak(c,enOnly){  // 日本語→英語の順に続けて読む
+  const l=[];
+  if(!enOnly&&!store.enOnly)l.push([spoken(c).replace(/…/g,"、"),"ja"]);
+  if(c.en)l.push([c.en,"en"]);
+  talk(l);
 }
 
 /* ---------- ホーム ---------- */
@@ -355,7 +386,7 @@ function vCredits(){
   <p class="note">写真はWikimedia Commonsのものを、正方形に切り抜いて使っています（${ks.length}枚）。</p>
   ${ks.map(k=>{const p=PHOTOS[k],c=getCard(k);return `<p style="margin:0 0 8px;font-size:14px;overflow-wrap:anywhere"><b>${esc(c?c.w:k)}</b>：<a href="${esc(p.page)}" target="_blank" rel="noopener">${esc(p.artist||"作者表示なし")}</a>／${p.licurl?`<a href="${esc(p.licurl)}" target="_blank" rel="noopener">${esc(p.lic)}</a>`:esc(p.lic)}</p>`}).join("")}`;
 }
-function sayText(t){try{speechSynthesis.cancel();utter(t,"en-US",/^en/i)}catch(e){}}
+function sayText(t){talk([[t,"en"]])}
 function vGrid(title,cards,canAdd){
   app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>${esc(title)}</h1></div>
   ${canAdd&&!cards.length?`<p class="note">赤ちゃんの好きなもの、家族の写真、ペットなど、なんでもカードにできます。</p>`:""}
@@ -599,11 +630,17 @@ function vRec(){
   <button class="link" data-a="export">書き出す</button>
   <button class="link" data-a="import">読み込む</button>
   <p class="muted" id="bkmsg" role="status"></p>
+  <h2>読み上げの声</h2>
+  <p class="muted">声がなめらかでないときは、iPhone・iPadの「設定」→「アクセシビリティ」→「読み上げコンテンツ」→「声」で、英語は「Ava（プレミアム）」など、日本語は「Kyoko（拡張）」などをダウンロードしてから、このアプリを開き直し、下で選んでください。</p>
+  ${["en","ja"].map(k=>{const vs=voicesFor(k),cur=pickVoice(k);return `<label class="f" for="vs-${k}">${k==="en"?"英語":"日本語"}の声</label><div class="vrow"><select id="vs-${k}">${vs.length?vs.map(v=>`<option value="${esc(v.voiceURI)}"${cur&&cur.voiceURI===v.voiceURI?" selected":""}>${esc(v.name)}（${esc(v.lang)}）</option>`).join(""):`<option value="">（声が見つかりません）</option>`}</select><button class="link" data-a="vtest" data-v="${k}">試し聞き</button></div>`}).join("")}
+  <label class="f" for="enrate">英語の速さ</label><select id="enrate">${[[.75,"ゆっくり"],[.85,"少しゆっくり"],[.9,"ふつう（おすすめ）"],[1,"自然な速さ"]].map(([r,l])=>`<option value="${r}"${(store.enRate||.9)==r?" selected":""}>${l}</option>`).join("")}</select>
   <h2>写真</h2><button class="link" data-a="credits">写真の出典を見る</button>
   <h2>生年月日</h2><input type="date" id="birth2" value="${esc(store.birth)}">
   <h2>記録を消す</h2>
   <button class="link danger" data-a="reset">見た記録・はじめての記録・自動調整の進み具合を消す（メモ・書き込み・自作カード・英語の時間は残す）</button>
   <div class="foot">版 ${VER}</div>`;
+  ["en","ja"].forEach(k=>{const el=document.getElementById("vs-"+k);el.addEventListener("change",()=>{store[k==="en"?"vEn":"vJa"]=el.value;save();talk([[k==="en"?"Look! A little dog.":"わんわん、いたね",k]])})});
+  const er=document.getElementById("enrate");er.addEventListener("change",()=>{store.enRate=Number(er.value);save();talk([["Look! A little dog.","en"]])});
   const b2=document.getElementById("birth2");
   b2.addEventListener("change",()=>{store.birth=b2.value;if(store.birth)store.stage=ageStage();store.todaySet=null;save()});
 }
@@ -659,6 +696,7 @@ app.addEventListener("click",e=>{
     case "next":nav(1);break;
     case "say":speak(curCard());break;
     case "enonly":store.enOnly=!store.enOnly;save();render();break;
+    case "vtest":talk([[v==="en"?"Look! A little dog. Can you see it?":"わんわん、いたね。かわいいね","en"===v?"en":"ja"]]);break;
     case "sayphc":sayText(curCard().ph);break;
     case "sayph":sayText(SCENES.find(x=>x.id===view.id).ph[Number(v)][0]);break;
     case "eng":go({name:"eng"});break;
