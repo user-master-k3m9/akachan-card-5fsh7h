@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>あかちゃんカード</title>
+<meta name="theme-color" content="#7a3b6e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="あかちゃんカード">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#f8f3f7;--surface:#fff;--ink:#2b2230;--muted:#6e6275;--line:#e4d8e2;--main:#7a3b6e;--main-ink:#fff;--soft:#f1e4ee;--danger:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#1c151b;--surface:#2a2029;--ink:#f3ecf2;--muted:#b9abb6;--line:#463844;--main:#d59ac8;--main-ink:#251a23;--soft:#3a2b37;--danger:#ff8a80}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+#app{max-width:1100px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:8px;min-height:52px;padding:calc(6px + env(safe-area-inset-top)) 0 6px;background:var(--bg)}
+.top h1{flex:1;min-width:0;margin:0;font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{min-width:44px;height:44px;padding:0 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:15px;white-space:nowrap}
+.ib.on{background:var(--main);color:var(--main-ink);border-color:var(--main)}
+.note{margin:0 0 14px;padding:10px 14px;background:var(--soft);border-radius:12px;font-size:14px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.seg button{min-height:60px;padding:6px 4px;border:1px solid var(--line);border-radius:12px;background:var(--surface);line-height:1.3}
+.seg b{display:block;font-size:15px}.seg small{font-size:11px;color:inherit;opacity:.8}
+.seg .on{background:var(--main);color:var(--main-ink);border-color:var(--main)}
+.pri{display:block;width:100%;min-height:56px;margin-bottom:18px;border:0;border-radius:14px;background:var(--main);color:var(--main-ink);font-size:17px;font-weight:700}
+h2{margin:20px 0 8px;font-size:16px}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.cat{display:flex;align-items:center;gap:10px;min-height:76px;padding:8px;border:1px solid var(--line);border-radius:14px;background:var(--surface);text-align:left}
+.cat .th{flex:none;width:58px;height:58px;border-radius:10px;overflow:hidden;background:#fff}
+.cat .th svg{display:block;width:100%;height:100%}
+.cat b{display:block;font-size:15px;line-height:1.3}.cat small{color:var(--muted);font-size:12px}
+.plusth{display:flex;align-items:center;justify-content:center;font-size:30px;color:#7a3b6e}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.tile{position:relative;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.tile .pic{position:relative;aspect-ratio:1;background:#fff;overflow:hidden}
+.tile .pic svg,.tile .pic img,.tile canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+.tile .pic img{object-fit:contain}
+.tile .nm{display:block;padding:4px 2px;font-size:13px;line-height:1.3;min-height:26px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tile .bdg{position:absolute;top:4px;right:4px;padding:0 6px;border-radius:9px;background:var(--main);color:var(--main-ink);font-size:11px}
+.tile.add .pic{display:flex;align-items:center;justify-content:center;font-size:40px;color:#7a3b6e}
+.foot{margin-top:24px;color:var(--muted);font-size:12px;text-align:center}
+.link{display:block;width:100%;min-height:48px;margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.link.danger{color:var(--danger)}
+.deck{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.stage{position:relative;width:min(100%,62dvh);aspect-ratio:1;margin:0 auto;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.18);touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.stage svg,.stage img{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
+.stage img{object-fit:contain}
+.stage canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
+.stage.writing{outline:3px solid var(--main);outline-offset:-3px;touch-action:none}
+.stage.writing canvas{pointer-events:auto;touch-action:none;cursor:crosshair}
+.pager{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;width:min(100%,62dvh);margin:0 auto}
+.pager .ib{height:48px;font-size:17px}
+.pager span{color:var(--muted);font-size:14px;min-width:60px;text-align:center}
+.word{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.word b{font-size:30px;line-height:1.25;overflow-wrap:anywhere;min-width:0}
+.word small{color:var(--muted);font-size:17px}
+.en{font-size:24px;line-height:1.3;color:var(--main);font-weight:600;overflow-wrap:anywhere}
+.says{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.phr{display:block;width:100%;padding:10px 14px;margin-bottom:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:left;font-size:17px;line-height:1.4}
+.phr small{display:block;color:var(--muted);font-size:13px}
+.enp{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.enh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:15px}.enh span{white-space:nowrap}
+.bar{height:10px;margin:8px 0;border-radius:5px;background:var(--soft);overflow:hidden}.bar i{display:block;height:100%;background:var(--main)}
+.enb{display:flex;gap:6px}.enb .ib{flex:1}
+.plan{font-size:15px}.plan p{margin:0 0 10px}.plan h3{margin:14px 0 4px;font-size:15px}
+.grades{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
+.cat .th img{display:block;width:100%;height:100%;object-fit:cover}
+.tip{margin:8px 0;padding:10px 14px;background:var(--soft);border-radius:12px;font-size:15px}
+.tip:empty{display:none}
+.reacts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.reacts button{min-height:56px;padding:4px 2px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:12px;line-height:1.3}
+.reacts .on{background:var(--main);color:var(--main-ink);border-color:var(--main)}
+.reacts i{display:block;font-style:normal;font-size:19px}
+label.f{display:block;margin:12px 0 4px;font-size:14px;font-weight:700}
+textarea,input[type=text]{display:block;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:16px}
+textarea{min-height:68px;resize:vertical}
+.tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sw{width:44px;height:44px;padding:0;border:3px solid var(--line);border-radius:50%}
+.sw.on{border-color:var(--main);box-shadow:0 0 0 2px var(--main)}
+.dot{display:block;margin:auto;border-radius:50%;background:currentColor}
+.preview{position:relative;width:min(100%,280px);aspect-ratio:1;margin-top:8px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.preview img{width:100%;height:100%;object-fit:contain;display:block}
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl td{padding:7px 4px;border-bottom:1px solid var(--line)}.tbl td:last-child{text-align:right;white-space:nowrap}
+.rowbtn{display:block;width:100%;padding:9px 12px;margin-bottom:6px;border:1px solid var(--line);border-radius:12px;background:var(--surface);text-align:left;font-size:15px;overflow-wrap:anywhere}
+.rowbtn small{display:block;color:var(--muted);font-size:12px}
+.muted{color:var(--muted);font-size:14px}
+body.show{background:#fff;overflow:hidden}
+body.show #app{padding:0;max-width:none}
+.showwrap{position:fixed;inset:0;z-index:20;background:#fff;display:flex;align-items:center;justify-content:center}
+.showwrap .stage{width:min(100vw,100dvh);border-radius:0;box-shadow:none}
+.showx{position:fixed;z-index:21;top:calc(8px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));width:44px;height:44px;border:1px solid #ccc;border-radius:50%;background:rgba(255,255,255,.75);color:#333;font-size:18px}
+@media (min-width:768px) and (orientation:landscape){
+  .deck{grid-template-columns:minmax(0,auto) minmax(300px,1fr);align-items:start;gap:20px}
+  .deck .col1{width:min(calc(100dvh - 134px),58vw)}
+  .deck .stage,.deck .pager{width:100%}
+}
+@media print{.top,.foot{display:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input id="pick" type="file" accept="image/*" hidden>
+<input id="restore" type="file" accept="application/json,.json" hidden>
+<script src="cards.js"></script>
+<script src="scenes.js"></script>
+<script src="photos.js"></script>
+<script>
+(function(){
+"use strict";
+const VER="v4";
+const KEY="babycards-v1";
+const app=document.getElementById("app");
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const jpDate=s=>{const a=String(s).split("-");return a.length===3?Number(a[1])+"月"+Number(a[2])+"日":s};
+
+/* ---------- 保存（記録はlocalStorage、書き込みと自作カードはIndexedDB） ---------- */
+const DEFAULTS={stage:1,log:{},react:{},memo:{},days:{},autoSpeak:false,penOnly:false,penSeen:false,todaySet:null,enLog:{},enGoal:120,enOnly:false,birth:"",srs:{},grades:[],planN:0,planNote:"",planEase:false,enStep:0,enEval:"",sceneLog:{},usePhoto:true};
+let store=Object.assign({},DEFAULTS);
+try{const raw=localStorage.getItem(KEY);if(raw)store=Object.assign({},DEFAULTS,JSON.parse(raw))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}}
+let db=null;
+const INK=new Map();   // カードid → 線の配列
+const MY=new Map();    // id → 自作カード
+function openDB(){return new Promise(res=>{
+  let q;try{q=indexedDB.open("babycards-db",1)}catch(e){return res(null)}
+  q.onupgradeneeded=()=>{const d=q.result;if(!d.objectStoreNames.contains("ink"))d.createObjectStore("ink");if(!d.objectStoreNames.contains("my"))d.createObjectStore("my",{keyPath:"id"})};
+  q.onsuccess=()=>res(q.result);q.onerror=()=>res(null);q.onblocked=()=>res(null);
+})}
+function all(name){return new Promise(res=>{
+  if(!db)return res([]);
+  const out=[],t=db.transaction(name).objectStore(name).openCursor();
+  t.onsuccess=()=>{const c=t.result;if(c){out.push([c.key,c.value]);c.continue()}else res(out)};t.onerror=()=>res(out);
+})}
+function dbPut(name,val,key){if(!db)return;try{const s=db.transaction(name,"readwrite").objectStore(name);key===undefined?s.put(val):s.put(val,key)}catch(e){}}
+function dbDel(name,key){if(!db)return;try{db.transaction(name,"readwrite").objectStore(name).delete(key)}catch(e){}}
+function saveInk(id){const s=INK.get(id);if(s&&s.length)dbPut("ink",s,id);else{INK.delete(id);dbDel("ink",id)}}
+
+/* ---------- カード一覧 ---------- */
+const BY={};CARDS.forEach(c=>BY[c.id]=c);
+const myCards=()=>[...MY.values()].sort((a,b)=>a.created-b.created);
+const getCard=id=>BY[id]||MY.get(id);
+const isMy=c=>c&&c.cat==="mine";
+CARDS.forEach(c=>{if(PHOTOS[c.id])c.pimg=PHOTOS[c.id].file});
+function cardPic(c){
+  if(isMy(c))return c.photo?`<img src="${esc(c.photo)}" alt="">`:"";
+  if(c.pimg&&store.usePhoto!==false)return `<img src="${c.pimg}" alt="">`;
+  return c.svg;
+}
+const stageCats=st=>CATS.filter(c=>c.st===st);
+const stageCards=st=>CARDS.filter(c=>c.st===st);
+const catCards=id=>CARDS.filter(c=>c.cat===id);
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+/* ---------- カリキュラムの自動調整 ----------
+   月齢→段階、反応→次に見せる日（間隔反復）、反応の割合→枚数、達成度→次の段階、実績→英語の目標 */
+const INT=[1,2,4,7,14,30];
+const MASTER={1:3,2:4,3:4};
+const BASEN={1:3,2:4,3:5};
+const ymd=x=>x.getFullYear()+"-"+pad(x.getMonth()+1)+"-"+pad(x.getDate());
+function addDays(d,n){const a=d.split("-").map(Number);return ymd(new Date(a[0],a[1]-1,a[2]+n))}
+function monthAge(){
+  if(!store.birth)return null;
+  const a=store.birth.split("-").map(Number),n=new Date();
+  let m=(n.getFullYear()-a[0])*12+n.getMonth()+1-a[1];if(n.getDate()<a[2])m--;
+  return Math.max(0,m);
+}
+function ageStage(){const m=monthAge();return m===null?store.stage:(m<4?1:m<8?2:3)}
+function masteredRate(st){const a=stageCards(st);return a.filter(c=>((store.srs[c.id]||{}).box||0)>=MASTER[st]).length/a.length}
+function levelStage(){const b=ageStage();return b<3&&masteredRate(b)>=.7?b+1:b}
+function gradeCard(id,g){
+  const d=today(),s=store.srs[id]||{box:0};
+  const base=s.last===d?(s.prev||0):(s.box||0);
+  s.prev=base;s.last=d;s.g=g;
+  if(g===0){s.box=Math.max(0,base-1);s.due=addDays(d,3)}
+  else{s.box=Math.min(INT.length-1,base+(g===2?2:1));s.due=addDays(d,INT[s.box])}
+  store.srs[id]=s;
+  store.grades=store.grades.filter(x=>!(x.id===id&&x.d===d));
+  store.grades.push({id,d,g});if(store.grades.length>40)store.grades=store.grades.slice(-40);
+  mark(id);
+}
+function adaptDaily(level){
+  const notes=[];
+  if(!store.planN)store.planN=BASEN[level];
+  const r=store.grades.slice(-14);
+  if(r.length>=8){
+    const rate=r.filter(x=>x.g>=1).length/r.length;
+    if(rate>=.8&&store.planN<10){store.planN++;store.planEase=false;store.grades=[];notes.push("よく反応しているので、カードを"+store.planN+"枚に増やしました。")}
+    else if(rate<.5){if(store.planN>3)store.planN--;store.planEase=true;store.grades=[];notes.push("反応が少なめなので、カードを"+store.planN+"枚にして、やさしい段階を混ぜました。")}
+    else if(rate>=.65)store.planEase=false;
+  }
+  if(!store.enStep)store.enStep=Math.min(30,store.enGoal||120);
+  const d=today();
+  if(!store.enEval)store.enEval=d;
+  else if(addDays(store.enEval,7)<=d){
+    let hit=0,sum=0;for(let i=1;i<=7;i++){const m=store.enLog[addDays(d,-i)]||0;sum+=m;if(m>=store.enStep)hit++}
+    const g=store.enGoal||120;
+    if(hit>=4&&store.enStep<g){store.enStep=Math.min(g,store.enStep+15);notes.push("先週よくできたので、英語の今日の目標を"+store.enStep+"分に上げました。")}
+    else if(sum<store.enStep*7*.4&&store.enStep>15){store.enStep=Math.max(15,store.enStep-15);notes.push("続けやすいように、英語の今日の目標を"+store.enStep+"分に下げました。")}
+    store.enEval=d;
+  }
+  return notes.join("");
+}
+function todaySet(){return plan().ids}
+function plan(){
+  const d=today(),t=store.todaySet,level=levelStage();
+  if(t&&t.d===d&&t.ids&&t.ids.every(getCard)&&t.ids.length&&t.level===level)return t;
+  const note=adaptDaily(level);
+  const n=store.planN||BASEN[level],srs=store.srs,log=store.log;
+  const due=CARDS.filter(c=>srs[c.id]&&srs[c.id].due&&srs[c.id].due<=d).sort((a,b)=>String(srs[a.id].due).localeCompare(String(srs[b.id].due))||(srs[a.id].box-srs[b.id].box));
+  const fresh=st=>stageCards(st).filter(c=>!srs[c.id]).sort((a,b)=>((log[a.id]||{}).n||0)-((log[b.id]||{}).n||0)||hash(d+a.id)-hash(d+b.id));
+  let pool=[];
+  if(store.planEase&&level>1)pool=fresh(level-1);
+  pool=pool.concat(fresh(level));
+  if(level<3)pool=pool.concat(fresh(level+1));
+  const reviews=due.slice(0,pool.length?n-1:n);
+  const news=pool.slice(0,n-reviews.length);
+  let ids=reviews.concat(news).map(c=>c.id);
+  if(ids.length<n){
+    const rest=CARDS.filter(c=>c.st<=level&&!ids.includes(c.id)&&srs[c.id]).sort((a,b)=>String(srs[a.id].due).localeCompare(String(srs[b.id].due)));
+    ids=ids.concat(rest.slice(0,n-ids.length).map(c=>c.id));
+  }
+  const scene=SCENES.slice().sort((a,b)=>String(store.sceneLog[a.id]||"").localeCompare(String(store.sceneLog[b.id]||""))||hash(d+a.id)-hash(d+b.id))[0].id;
+  const out={d,level,ids,rev:reviews.length,neu:news.length,scene,note:note||(t&&t.d===d?t.note:"")};
+  store.todaySet=out;save();return out;
+}
+
+/* ---------- 画面の移動 ---------- */
+let view={name:"home"};
+function go(v){view=v;history.pushState({v},"");render();window.scrollTo(0,0)}
+function back(){history.length>1&&history.state&&history.state.v&&history.state.v.name!=="home"?history.back():(view={name:"home"},render())}
+addEventListener("popstate",e=>{stopDwell();view=(e.state&&e.state.v)||{name:"home"};writing=false;render()});
+try{history.replaceState({v:view},"")}catch(e){}
+
+/* ---------- 読み上げ ---------- */
+function spoken(c){
+  if(c.st===1)return c.on||c.w;
+  if(!c.on||c.on.indexOf(c.w)>=0)return c.on||c.w;
+  return c.w+"、"+c.on;
+}
+function utter(text,lang,re){
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=lang;u.rate=.8;u.pitch=1.15;
+  const vs=speechSynthesis.getVoices(),v=vs.find(x=>x.lang.replace("_","-")===lang)||vs.find(x=>re.test(x.lang));
+  if(v)u.voice=v;
+  speechSynthesis.speak(u);
+}
+function speak(c,enOnly){  // 日本語→英語の順に続けて読む
+  try{
+    speechSynthesis.cancel();
+    if(!enOnly&&!store.enOnly)utter(spoken(c).replace(/…/g,"、"),"ja-JP",/^ja/i);
+    if(c.en)utter(c.en,"en-US",/^en/i);
+  }catch(e){}
+}
+
+/* ---------- ホーム ---------- */
+function vHome(){
+  const st=store.stage,P=plan(),ids=P.ids,d=today(),age=monthAge();
+  const seen=ids.filter(i=>(store.log[i]||{}).last===d).length;
+  const sc=SCENES.find(x=>x.id===P.scene);
+  const mine=myCards();
+  app.innerHTML=`
+  <div class="top"><h1>あかちゃんカード</h1><button class="ib" data-a="rec">きろく</button></div>
+  ${store.birth?"":`<div class="enp" style="margin-bottom:14px"><label class="f" style="margin-top:0" for="birth">生年月日を入れると、月齢に合わせて自動で調整します（この端末の中だけに保存）</label><input type="date" id="birth"></div>`}
+  ${P.note?`<p class="note"><b>自動調整：</b>${esc(P.note)}</p>`:""}
+  ${age!==null&&age>12?`<p class="note"><b>12か月までの教材を終える時期です。</b>1歳以降の教材はまだ作っていません。今は復習を続けます。</p>`:""}
+  <p class="note">1回2〜3分で十分です。見せっぱなしにせず、抱っこして声をかけながら。目をそらしたらおしまいの合図です。</p>
+  <div class="seg">${STAGES.map(s=>`<button class="${s.st===st?"on":""}" data-a="stage" data-v="${s.st}"><b>${esc(s.name)}</b><small>${esc(s.sub)}</small></button>`).join("")}</div>
+  <h2 style="margin-top:0">今日のメニュー${age!==null?`（生後${age}か月）`:""}</h2>
+  <button class="pri" style="margin-bottom:10px" data-a="today">今日のカードを見る（${seen}/${ids.length}）<small style="display:block;font-weight:400;font-size:13px">復習${P.rev}枚・新しいカード${P.neu}枚</small></button>
+  <button class="link" style="margin:0 0 10px" data-a="scene" data-v="${sc.id}">今日の英語の声かけ：${esc(sc.name)}</button>
+  ${enPanel()}
+  <button class="link" style="margin:10px 0 0" data-a="eng">えいごの声かけ・バイリンガルの進め方</button>
+  <button class="link" style="margin:10px 0 0" data-a="road">15歳までの地図（最終目標）</button>
+  <h2>カード</h2>
+  <div class="cats">
+    ${stageCats(st).map(c=>{const a=catCards(c.id);return `<button class="cat" data-a="cat" data-v="${c.id}"><span class="th">${cardPic(a[0])}</span><span><b>${esc(c.name)}</b><small>${a.length}枚</small></span></button>`}).join("")}
+    <button class="cat" data-a="mine"><span class="th plusth">＋</span><span><b>じぶんのカード</b><small>${mine.length?mine.length+"枚":"絵や写真で作る"}</small></span></button>
+  </div>
+  <h2>ほかの月齢</h2>
+  <div class="cats">${STAGES.filter(s=>s.st!==st).map(s=>`<button class="cat" data-a="stage" data-v="${s.st}"><span class="th">${cardPic(stageCards(s.st)[0])}</span><span><b>${esc(s.name)}</b><small>${stageCards(s.st).length}枚</small></span></button>`).join("")}</div>
+  <div class="foot"><div id="ofl">オフライン利用：確認中</div><div>版 ${VER}</div></div>`;
+  updateOffline();
+  const bi=document.getElementById("birth");
+  if(bi)bi.addEventListener("change",()=>{if(!bi.value)return;store.birth=bi.value;store.stage=ageStage();store.todaySet=null;store.planN=0;save();render()});
+}
+function vRoad(){
+  const age=monthAge();
+  const B=[
+   ["0歳（いま）","○ アプリあり","<b>英語：</b>話しかけと歌を毎日。<b>算数の芽：</b>大きい・小さいなどの声かけ。<b>国語：</b>日本語の話しかけと絵本。<b>論理の芽：</b>いないいないばあ、落とすと音が出るなど、原因と結果の遊び。"],
+   ["1〜3歳","× まだ","<b>英語：</b>英語の絵本、やりとりで短い文。<b>算数：</b>数える、仲間分け、積み木、パズル。<b>国語：</b>毎日の読み聞かせ。<b>論理：</b>「なんで？」に一緒に考えて答える。"],
+   ["3〜6歳","× まだ","<b>英語：</b>英語で会話、文字と音の対応（フォニックス）。<b>算数：</b>足し算・引き算の意味、図形パズル。<b>国語：</b>ひらがな、自分で読む。<b>論理：</b>順序を考えるゲーム、理由をつけて話す。"],
+   ["小1〜3","× まだ","<b>英語：</b>英語の本を読む、英検3級〜準2級。<b>算数：</b>小学校の範囲を先取り。<b>国語：</b>読書量、漢字。<b>論理：</b>プログラミング入門、将棋・囲碁、根拠を挙げて話す。"],
+   ["小4〜6","× まだ","<b>英語：</b>英検2級、英語で意見を言う。<b>数学：</b>中学範囲へ。<b>理科・社会：</b>中学範囲。<b>国語：</b>説明文の要約。<b>論理：</b>仮説を立てて確かめる、話し合い。"],
+   ["中1〜3","× まだ","<b>英語：</b>英検準1級程度、英語で議論。<b>数学：</b>共通テストの範囲（数学I・A・II・B・C）。<b>理科・社会・情報：</b>選んだ科目の高校範囲。<b>国語：</b>現代文、古文、漢文。<b>論理：</b>ディベート、小論文。中3で共通テストの過去問を解き、9割を確かめる。"],
+  ];
+  app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>15歳までの地図</h1></div>
+  <p class="note"><b>最終目標（高校入学前）：</b>共通テスト9割、英語を話せる、論理的に考えられる。${age!==null?`<br>いま：生後${age}か月。`:""}</p>
+  <div class="plan">
+  <p><b>正直な見通し：</b>共通テスト9割は受験生の中でも上位のごく一部で、中学生のうちに届く子はさらにまれです。やり方だけでは保証できず、本人の適性と意欲に左右されます。下の表は、目標から逆算した私の提案で、研究で確かめられた道筋ではありません。</p>
+  ${B.map(x=>`<h3>${x[0]}　<span class="muted">${x[1]}</span></h3><p>${x[2]}</p>`).join("")}
+  <p><b>優先すること：</b>睡眠、遊び、親子のやりとりを削らないこと。嫌がるようになったら量を減らすこと。学ぶ意欲を失うと、15歳までの長い道のりが続きません。</p>
+  </div>`;
+}
+function enPanel(){
+  const m=store.enLog[today()]||0,g=store.enStep||Math.min(30,store.enGoal||120);
+  return `<div class="enp" id="enpanel"><div class="enh"><b>今日、英語で話しかけた時間</b><span>${m}分 / ${g}分</span></div>
+  <div class="bar"><i style="width:${Math.min(100,m/g*100)}%"></i></div>
+  <div class="enb"><button class="ib" data-a="enadd" data-v="10">＋10分</button><button class="ib" data-a="enadd" data-v="30">＋30分</button><button class="ib" data-a="enadd" data-v="-10">−10分</button></div></div>`;
+}
+function vEng(){
+  const days=Object.keys(store.enLog).sort().reverse().slice(0,7);
+  const wk=[];for(let i=0;i<7;i++){const d=new Date();d.setDate(d.getDate()-i);wk.push(d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()))}
+  const sum=wk.reduce((a,d)=>a+(store.enLog[d]||0),0);
+  app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>えいご</h1></div>
+  ${enPanel()}
+  <p class="muted" style="margin:8px 0">この7日間：合計${Math.floor(sum/60)}時間${sum%60}分（1日平均${Math.round(sum/7)}分）</p>
+  <label class="f" for="engoal">最終的な1日の目標（分）。今日の目標は実績に合わせて自動で上下します</label><input type="text" inputmode="numeric" id="engoal" value="${store.enGoal||120}">
+  <h2>場面ごとの声かけ</h2>
+  <div class="cats">${SCENES.map(c=>`<button class="cat" data-a="scene" data-v="${c.id}"><span><b>${esc(c.name)}</b><small>${c.ph.length}フレーズ</small></span></button>`).join("")}</div>
+  <h2>バイリンガルに必要なこと</h2>
+  <div class="plan">
+  <p><b>アプリだけではバイリンガルになりません。</b>赤ちゃんは、目の前の人とのやりとりから言葉を身につけます。9か月児に外国語を聞かせた実験では、対面では音の聞き分けが身につき、同じ内容の映像や音声だけでは身につきませんでした（Kuhl 2003）。このアプリは、<b>おとなが英語で話しかけるための道具</b>です。</p>
+  <p><b>量の目安：</b>起きている時間の2〜3割を英語にふれて過ごすこと。これを下回ると、英語を話すようになりにくいという報告があります（Pearson 1997）。赤ちゃんが起きている時間を1日10時間とすると2〜3時間です。目標の120分はここから決めました。無理なら短くしても大丈夫です。短くても毎日続ける方を優先します。</p>
+  <p><b>数えるのは生の声だけ：</b>おとなが話しかけた時間、歌った時間、英語を話す人と過ごした時間。動画や音声の流しっぱなしは数えません。</p>
+  <p><b>決めごと：</b>「○○さんは英語で話す」「おふろとねんねは英語」のように、人か場面で分けると続きます。訳さず英語のまま話します。カードの「英語だけ」を使ってください。</p>
+  <p><b>発音：</b>完璧でなくても、話しかけをやめないでください。読み上げをお手本にしつつ、英語を話す人と過ごす時間も作れると、音にふれる幅が広がります。</p>
+  <h3>0〜3か月</h3><p>おむつ、おふろ、ねんねで英語を話し、歌います。まだ返事がなくても大丈夫です。</p>
+  <h3>4〜7か月</h3><p>声を出したらまねして返します。peekaboo などのくり返し遊びと、短い絵本を始めます。</p>
+  <h3>8〜12か月</h3><p>指さしたものの名前を英語で言います（dog! Yes, a dog!）。"Where is your nose?" のように、質問にしぐさで答える遊びをします。</p>
+  <h3>1歳から先</h3><p>ここで終わりではありません。やめると、覚えた言葉は使わなくなっていきます。英語を話す人や子どもと遊ぶ機会を増やし、幼児期以降も続けます。</p>
+  <p class="muted">日本語の話しかけも減らさないでください。2つの言葉を混ぜて話すのは、よくあることで心配いりません。言葉の遅れが気になるときは、2言語だからと様子を見ず、小児科や健診で相談してください。</p>
+  </div>`;
+  const g=document.getElementById("engoal");
+  g.addEventListener("change",()=>{const n=parseInt(g.value,10);if(n>0&&n<=720){store.enGoal=n;if(store.enStep>n)store.enStep=n;save();render()}else g.value=store.enGoal||120});
+}
+function vScene(){
+  const c=SCENES.find(x=>x.id===view.id);
+  app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>${esc(c.name)}</h1></div>
+  <p class="note">読み上げを聞いてまねし、赤ちゃんの顔を見て話しかけてください。</p>
+  ${c.ph.map((p,i)=>`<button class="phr" data-a="sayph" data-v="${i}"><span lang="en">🔊 ${esc(p[0])}</span><small>${esc(p[1])}</small></button>`).join("")}`;
+}
+function vCredits(){
+  const ks=Object.keys(PHOTOS);
+  app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>写真の出典</h1></div>
+  <p class="note">写真はWikimedia Commonsのものを、正方形に切り抜いて使っています（${ks.length}枚）。</p>
+  ${ks.map(k=>{const p=PHOTOS[k],c=getCard(k);return `<p style="margin:0 0 8px;font-size:14px;overflow-wrap:anywhere"><b>${esc(c?c.w:k)}</b>：<a href="${esc(p.page)}" target="_blank" rel="noopener">${esc(p.artist||"作者表示なし")}</a>／${p.licurl?`<a href="${esc(p.licurl)}" target="_blank" rel="noopener">${esc(p.lic)}</a>`:esc(p.lic)}</p>`}).join("")}`;
+}
+function sayText(t){try{speechSynthesis.cancel();utter(t,"en-US",/^en/i)}catch(e){}}
+function vGrid(title,cards,canAdd){
+  app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>${esc(title)}</h1></div>
+  ${canAdd&&!cards.length?`<p class="note">赤ちゃんの好きなもの、家族の写真、ペットなど、なんでもカードにできます。</p>`:""}
+  <div class="grid">
+  ${canAdd?`<button class="tile add" data-a="newcard"><span class="pic">＋</span><span class="nm">新しいカード</span></button>`:""}
+  ${cards.map((c,i)=>`<button class="tile" data-a="open" data-v="${i}"><span class="pic" style="display:block">${cardPic(c)}${INK.has(c.id)?`<canvas data-ink="${esc(c.id)}"></canvas>`:""}</span><span class="nm">${esc(c.w)}</span>${(store.log[c.id]||{}).n?`<span class="bdg">${store.log[c.id].n}</span>`:""}</button>`).join("")}
+  </div>`;
+  app.querySelectorAll("canvas[data-ink]").forEach(cv=>{
+    const r=cv.getBoundingClientRect(),w=Math.max(1,Math.round(r.width*2));cv.width=w;cv.height=w;
+    paint(cv.getContext("2d"),INK.get(cv.dataset.ink)||[],w);
+  });
+  view.ids=cards.map(c=>c.id);
+}
+
+/* ---------- 線を描く（1000×1000の座標で保存） ---------- */
+const COLORS=["#1a1a1a","#e0302b","#1f6fd6","#2e9e4f","#f5b301","#ffffff"];
+const SIZES=[6,14,30];
+function setDash(ctx,s,pr){ctx.strokeStyle=s.c;ctx.lineWidth=s.w*(.45+1.1*pr)}
+function strokePath(ctx,s,scale){
+  const p=s.p,n=p.length/3;
+  ctx.save();ctx.scale(scale/1000,scale/1000);ctx.lineCap="round";ctx.lineJoin="round";
+  if(n===1){ctx.fillStyle=s.c;ctx.beginPath();ctx.arc(p[0],p[1],s.w*(.45+1.1*p[2]/100)/2,0,7);ctx.fill();ctx.restore();return}
+  let mx=p[0],my=p[1];
+  for(let i=1;i<n;i++){
+    const x=p[i*3],y=p[i*3+1],pr=p[i*3+2]/100;
+    const nx=i<n-1?(x+p[i*3+3])/2:x,ny=i<n-1?(y+p[i*3+4])/2:y;
+    setDash(ctx,s,pr);ctx.beginPath();ctx.moveTo(mx,my);ctx.quadraticCurveTo(x,y,nx,ny);ctx.stroke();
+    mx=nx;my=ny;
+  }
+  ctx.restore();
+}
+function paint(ctx,strokes,size){ctx.clearRect(0,0,size,size);(strokes||[]).forEach(s=>strokePath(ctx,s,size))}
+function segDist(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let t=l?((px-ax)*dx+(py-ay)*dy)/l:0;t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-ax-t*dx,py-ay-t*dy);
+}
+function hit(s,x,y,r){
+  const p=s.p,n=p.length/3,rr=r+s.w/2;
+  if(n===1)return Math.hypot(p[0]-x,p[1]-y)<=rr;
+  for(let i=1;i<n;i++)if(segDist(x,y,p[(i-1)*3],p[(i-1)*3+1],p[i*3],p[i*3+1])<=rr)return true;
+  return false;
+}
+
+/* ---------- カードを見る・書く ---------- */
+let writing=false,show=false;
+const pen={color:COLORS[0],size:1,erase:false};
+let undo=[],dwell=null,inkCtl=null;
+function stopDwell(){if(dwell){clearTimeout(dwell);dwell=null}}
+function mark(id){
+  const d=today(),l=store.log[id]||{n:0,last:""};
+  if(l.last===d)return;
+  l.n=(l.n||0)+1;l.last=d;store.log[id]=l;store.days[d]=(store.days[d]||0)+1;save();
+}
+function startDwell(id){stopDwell();dwell=setTimeout(()=>{dwell=null;mark(id)},2000)}
+function curCard(){return getCard(view.ids[view.i])}
+function vDeck(){
+  const ids=view.ids=view.ids.filter(getCard);
+  if(!ids.length)return back();
+  view.i=Math.max(0,Math.min(ids.length-1,view.i));
+  const c=curCard();
+  if(!c)return back();
+  undo=[];
+  const r=store.react[c.id]||{};
+  const stageHtml=`<div class="stage ${writing?"writing":""}" id="stage">${cardPic(c)}<canvas id="ink"></canvas></div>`;
+  if(show){
+    document.body.classList.add("show");
+    app.innerHTML=`<div class="showwrap">${stageHtml}</div><button class="showx" data-a="unshow" aria-label="もどる">✕</button>`;
+    bindStage(c);startDwell(c.id);if(store.autoSpeak)speak(c);return;
+  }
+  document.body.classList.remove("show");
+  app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>${esc(view.title||"")}</h1>
+    <button class="ib" data-a="show">大きく</button>
+    <button class="ib ${writing?"on":""}" data-a="write">${writing?"書くのをやめる":"✏️ 書く"}</button></div>
+  <div class="deck"><div class="col1">${stageHtml}
+    ${writing?"":`<div class="pager" style="margin-top:10px"><button class="ib" data-a="prev" ${view.i?"":"disabled"}>◀ まえ</button><span>${view.i+1} / ${ids.length}</span><button class="ib" data-a="next" ${view.i<ids.length-1?"":"disabled"}>つぎ ▶</button></div>
+    <p class="muted" style="margin:10px 0 4px">反応はどうでしたか？（次に見せる日を自動で決めます）</p>
+    <div class="grades">${(c.st===1?[[0,"目をそらした"],[1,"じっと見た"]]:[[0,"反応なし"],[1,"見た"],[2,"わかった"]]).map(g=>{const q=store.srs[c.id]||{};return `<button class="ib ${q.last===today()&&q.g===g[0]?"on":""}" data-a="grade" data-v="${g[0]}">${g[1]}</button>`}).join("")}</div>`}
+  </div>
+  <div class="col2">${writing?toolsHtml():`
+    <div class="word"><b>${esc(c.w)}</b>${c.on&&c.on!==c.w?`<small>${esc(c.on)}</small>`:""}</div>
+    ${c.en?`<div class="en" lang="en">${esc(c.en)}</div>`:""}
+    <div class="says"><button class="ib" data-a="say">🔊 ${c.en?(store.enOnly?"英語で読む":"日本語＋英語"):"読む"}</button>${c.en?`<button class="ib ${store.enOnly?"on":""}" data-a="enonly">英語だけ：${store.enOnly?"オン":"オフ"}</button>`:""}</div>
+    ${c.ph?`<button class="phr" style="margin-top:8px" data-a="sayphc"><span lang="en">🔊 ${esc(c.ph)}</span><small>${esc(c.phj)}</small></button>`:""}
+    <div class="tip">${esc(c.tip||"")}</div>
+    <div class="reacts">${[["see","👀","よく見た"],["smile","😊","わらった"],["point","☝️","指さした"],["voice","💬","声を出した"]].map(a=>`<button class="${r[a[0]]?"on":""}" data-a="react" data-v="${a[0]}"><i>${a[1]}</i>${a[2]}</button>`).join("")}</div>
+    <label class="f" for="memo">メモ</label><textarea id="memo" placeholder="どんな反応だったか、気づいたこと">${esc(store.memo[c.id]||"")}</textarea>
+    ${isMy(c)?`<button class="link" data-a="editcard">このカードを編集する</button>`:""}
+    ${c.pimg?`<button class="link" data-a="usephoto">表示：${store.usePhoto!==false?"写真":"イラスト"}（押して切りかえ）</button>`:""}
+    ${c.pimg&&store.usePhoto!==false?`<p class="muted" style="margin:8px 0 0">写真：<a href="${esc(PHOTOS[c.id].page)}" target="_blank" rel="noopener">${esc(PHOTOS[c.id].artist||"Wikimedia Commons")}</a>／${esc(PHOTOS[c.id].lic)}（切り抜き）</p>`:""}
+    <button class="link" data-a="auto">めくったら自動で読む：${store.autoSpeak?"オン":"オフ"}</button>
+  `}</div></div>`;
+  bindStage(c);
+  const m=document.getElementById("memo");
+  if(m)m.addEventListener("input",()=>{const v=m.value;if(v)store.memo[c.id]=v;else delete store.memo[c.id];save()});
+  startDwell(c.id);
+  if(store.autoSpeak&&!writing)speak(c);
+}
+function toolsHtml(){
+  const dots=[8,14,24];
+  return `<div class="tools">
+    ${COLORS.map(c=>`<button class="sw ${!pen.erase&&pen.color===c?"on":""}" style="background:${c}" data-a="color" data-v="${c}" aria-label="色"></button>`).join("")}
+  </div>
+  <div class="tools" style="margin-top:8px">
+    ${SIZES.map((s,i)=>`<button class="ib ${!pen.erase&&pen.size===i?"on":""}" data-a="size" data-v="${i}" aria-label="太さ"><span class="dot" style="width:${dots[i]}px;height:${dots[i]}px"></span></button>`).join("")}
+    <button class="ib ${pen.erase?"on":""}" data-a="erase">消しゴム</button>
+    <button class="ib" data-a="undo">もどす</button>
+    <button class="ib" data-a="clear">ぜんぶ消す</button>
+  </div>
+  <div class="tools" style="margin-top:8px">
+    <button class="ib ${store.penOnly?"on":""}" data-a="penonly">${store.penOnly?"ペンだけで書く：オン":"ペンだけで書く：オフ（指でも書ける）"}</button>
+  </div>
+  <p class="muted" style="margin:10px 0 0">書いた線は自動で保存されます。</p>
+  <div class="pager" style="margin-top:10px;width:100%"><button class="ib" data-a="prev" ${view.i?"":"disabled"}>◀ まえ</button><span>${view.i+1} / ${view.ids.length}</span><button class="ib" data-a="next" ${view.i<view.ids.length-1?"":"disabled"}>つぎ ▶</button></div>`;
+}
+function refreshTools(){const col=app.querySelector(".col2");if(col&&writing)col.innerHTML=toolsHtml()}
+function nav(d){const n=view.i+d;if(n<0||n>=view.ids.length)return false;stopDwell();view.i=n;try{history.replaceState({v:view},"")}catch(e){}render();return true}
+function bindStage(c){
+  const stage=document.getElementById("stage"),cv=document.getElementById("ink");
+  if(inkCtl)inkCtl.abort();inkCtl=new AbortController();const sig={signal:inkCtl.signal};
+  const ctx=cv.getContext("2d");
+  let size=0;
+  const fit=()=>{const r=cv.getBoundingClientRect();const dpr=Math.min(window.devicePixelRatio||1,3);const s=Math.max(1,Math.round(r.width*dpr));if(s!==size){size=s;cv.width=s;cv.height=s}paint(ctx,INK.get(c.id),size)};
+  fit();addEventListener("resize",fit,sig);
+  /* 書く */
+  let active=null;
+  const pt=e=>{const r=cv.getBoundingClientRect();return [Math.round((e.clientX-r.left)/r.width*1000),Math.round((e.clientY-r.top)/r.height*1000),e.pointerType==="pen"?Math.round((e.pressure||.5)*100):50]};
+  const eraseAt=(a)=>{
+    const from=active.last||a;active.last=a;
+    const steps=Math.max(1,Math.ceil(Math.hypot(a[0]-from[0],a[1]-from[1])/12));  // 速く動かしても線を飛び越えない
+    const list=INK.get(c.id)||[];
+    const keep=list.filter(s=>{for(let i=0;i<=steps;i++){const t=i/steps;if(hit(s,from[0]+(a[0]-from[0])*t,from[1]+(a[1]-from[1])*t,16))return false}return true});
+    if(keep.length!==list.length){if(!active.snap){undo.push(list.slice());active.snap=true}INK.set(c.id,keep);paint(ctx,keep,size)}
+  };
+  const liveSeg=()=>{
+    const s=active.s,p=s.p,n=p.length/3;if(n<2)return;
+    ctx.save();ctx.scale(size/1000,size/1000);ctx.lineCap="round";ctx.lineJoin="round";setDash(ctx,s,p[(n-1)*3+2]/100);
+    ctx.beginPath();
+    if(n===2){ctx.moveTo(p[0],p[1]);ctx.lineTo((p[0]+p[3])/2,(p[1]+p[4])/2)}
+    else{const ax=(p[(n-3)*3]+p[(n-2)*3])/2,ay=(p[(n-3)*3+1]+p[(n-2)*3+1])/2,bx=(p[(n-2)*3]+p[(n-1)*3])/2,by=(p[(n-2)*3+1]+p[(n-1)*3+1])/2;ctx.moveTo(ax,ay);ctx.quadraticCurveTo(p[(n-2)*3],p[(n-2)*3+1],bx,by)}
+    ctx.stroke();ctx.restore();
+  };
+  const finish=()=>{
+    if(!active)return;
+    if(active.s){const l=INK.get(c.id)||[];undo.push(l.slice());l.push(active.s);INK.set(c.id,l)}
+    active=null;paint(ctx,INK.get(c.id),size);saveInk(c.id);
+  };
+  cv.addEventListener("pointerdown",e=>{
+    if(!writing)return;
+    if(e.pointerType==="pen"&&!store.penSeen){store.penSeen=true;store.penOnly=true;save();refreshTools()}
+    if(e.pointerType==="touch"&&store.penOnly)return;
+    if(active){
+      if(e.pointerType==="pen"&&active.type!=="pen"){active=null;paint(ctx,INK.get(c.id),size)}  // 手のひらが先に触れていたら取り消す
+      else return;
+    }
+    e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(_){}
+    const a=pt(e);
+    active={id:e.pointerId,type:e.pointerType};
+    if(pen.erase)eraseAt(a);
+    else{active.s={c:pen.color,w:SIZES[pen.size],p:a.slice()};strokePath(ctx,active.s,size)}
+  },sig);
+  cv.addEventListener("pointermove",e=>{
+    if(!active||e.pointerId!==active.id)return;
+    e.preventDefault();
+    const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];
+    (evs.length?evs:[e]).forEach(ev=>{
+      const a=pt(ev);
+      if(pen.erase)eraseAt(a);
+      else if(active.s){active.s.p.push(a[0],a[1],a[2]);liveSeg()}
+    });
+  },sig);
+  const end=e=>{if(active&&e.pointerId===active.id)finish()};
+  cv.addEventListener("pointerup",end,sig);cv.addEventListener("pointercancel",end,sig);
+  const stop=e=>{if(writing)e.preventDefault()};
+  cv.addEventListener("touchstart",stop,Object.assign({passive:false},sig));
+  cv.addEventListener("touchmove",stop,Object.assign({passive:false},sig));
+  /* めくる（スワイプ、大きく表示ではタップでも） */
+  let sx=null,sy=0;
+  stage.addEventListener("pointerdown",e=>{if(writing)return;sx=e.clientX;sy=e.clientY},sig);
+  stage.addEventListener("pointercancel",()=>{sx=null},sig);
+  stage.addEventListener("pointerup",e=>{
+    if(writing||sx===null)return;
+    const dx=e.clientX-sx,dy=e.clientY-sy;sx=null;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.3){nav(dx<0?1:-1);return}
+    if(show&&Math.abs(dx)<12&&Math.abs(dy)<12){const r=stage.getBoundingClientRect();nav(e.clientX-r.left<r.width/3?-1:1)}
+  },sig);
+  inkApi={ctx:()=>{paint(ctx,INK.get(c.id),size)}};
+}
+let inkApi=null,wake=null;
+async function keepAwake(on){try{if(on&&navigator.wakeLock)wake=await navigator.wakeLock.request("screen");else if(wake){await wake.release();wake=null}}catch(e){}}
+
+/* ---------- 自作カードの編集 ---------- */
+let draft=null;
+function vEdit(){
+  const d=draft;
+  app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>${d.isNew?"新しいカード":"カードを編集"}</h1></div>
+  <label class="f" for="fw">ことば（カードの名前）</label><input type="text" id="fw" maxlength="30" placeholder="例：ぱぱ、おばあちゃん、ポチ" value="${esc(d.w)}">
+  <label class="f" for="fe">英語（なくてもOK）</label><input type="text" id="fe" lang="en" autocapitalize="none" maxlength="40" placeholder="例：daddy" value="${esc(d.en)}">
+  <label class="f" for="fo">読み上げる音（なくてもOK）</label><input type="text" id="fo" maxlength="40" placeholder="例：わんわん" value="${esc(d.on)}">
+  <label class="f" for="ft">声かけのメモ（なくてもOK）</label><textarea id="ft" placeholder="例：「ぱぱだよ」と写真を指さす">${esc(d.tip)}</textarea>
+  <label class="f">写真（なくてもOK。なければ白紙に書けます）</label>
+  <button class="link" data-a="pick">${d.photo?"写真を変える":"写真を選ぶ"}</button>
+  ${d.photo?`<div class="preview"><img src="${esc(d.photo)}" alt=""></div><button class="link" data-a="nophoto">写真をはずす</button>`:""}
+  <p class="muted" id="ferr" role="alert"></p>
+  <button class="pri" style="margin-top:14px" data-a="savecard">${d.isNew?"作って書き込む":"保存する"}</button>
+  ${d.isNew?"":`<button class="link danger" data-a="delcard">このカードを消す</button>`}`;
+  ["fw","fe","fo","ft"].forEach((id,i)=>{const k=["w","en","on","tip"][i];document.getElementById(id).addEventListener("input",e=>{d[k]=e.target.value})});
+}
+function shrink(file){return new Promise((res,rej)=>{
+  const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{
+    const m=1200,k=Math.min(1,m/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement("canvas");
+    c.width=Math.max(1,Math.round(im.naturalWidth*k));c.height=Math.max(1,Math.round(im.naturalHeight*k));
+    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+    URL.revokeObjectURL(u);res(c.toDataURL("image/jpeg",.85));
+  };
+  im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("img"))};im.src=u;
+})}
+document.getElementById("pick").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f||!draft)return;
+  try{draft.photo=await shrink(f);render()}catch(_){const el=document.getElementById("ferr");if(el)el.textContent="この写真は読み込めませんでした。別の写真を選んでください。"}
+});
+
+/* ---------- きろく・バックアップ ---------- */
+const RLBL={see:"よく見た",smile:"わらった",point:"指さした",voice:"声を出した"};
+function vRec(){
+  const seen=Object.keys(store.log).filter(getCard).length,total=CARDS.length+MY.size;
+  const days=Object.keys(store.days).sort().reverse().slice(0,14);
+  const ev=[];Object.entries(store.react).forEach(([id,o])=>{const c=getCard(id);if(c)Object.entries(o).forEach(([k,d])=>ev.push({id,c,k,d}))});
+  ev.sort((a,b)=>String(b.d).localeCompare(String(a.d)));
+  const memos=Object.entries(store.memo).filter(([id])=>getCard(id));
+  app.innerHTML=`<div class="top"><button class="ib" data-a="back">←</button><h1>きろく</h1></div>
+  <p class="note">今日 ${store.days[today()]||0}枚 ／ これまでに見たカード ${seen} / ${total}枚</p>
+  <h2>見た日</h2>
+  ${days.length?`<table class="tbl">${days.map(d=>`<tr><td>${esc(jpDate(d))}</td><td>${store.days[d]}枚</td></tr>`).join("")}</table>`:`<p class="muted">カードを2秒見ると記録されます。</p>`}
+  <h2>はじめての記録</h2>
+  ${ev.length?ev.map(x=>`<button class="rowbtn" data-a="jump" data-v="${esc(x.c.id)}">${esc(x.c.w)}：${esc(RLBL[x.k]||x.k)}<small>${esc(jpDate(x.d))}</small></button>`).join(""):`<p class="muted">カードの「指さした」などを押すと、はじめての日が残ります。</p>`}
+  <h2>メモ</h2>
+  ${memos.length?memos.map(([id,t])=>`<button class="rowbtn" data-a="jump" data-v="${esc(id)}">${esc(t)}<small>${esc(getCard(id).w)}</small></button>`).join(""):`<p class="muted">まだありません。</p>`}
+  <h2>バックアップ・別の端末へ</h2>
+  <p class="muted">書き込みと記録は、この端末の中だけに保存されます。iPadとiPhoneで同じ内容にしたいときは、「書き出す」でできたファイルをAirDropなどで送り、もう一方で「読み込む」を押します。</p>
+  <button class="link" data-a="export">書き出す</button>
+  <button class="link" data-a="import">読み込む</button>
+  <p class="muted" id="bkmsg" role="status"></p>
+  <h2>写真</h2><button class="link" data-a="credits">写真の出典を見る</button>
+  <h2>生年月日</h2><input type="date" id="birth2" value="${esc(store.birth)}">
+  <h2>記録を消す</h2>
+  <button class="link danger" data-a="reset">見た記録・はじめての記録・自動調整の進み具合を消す（メモ・書き込み・自作カード・英語の時間は残す）</button>
+  <div class="foot">版 ${VER}</div>`;
+  const b2=document.getElementById("birth2");
+  b2.addEventListener("change",()=>{store.birth=b2.value;if(store.birth)store.stage=ageStage();store.todaySet=null;save()});
+}
+async function doExport(){
+  const data={app:"babycards",ver:1,at:new Date().toISOString(),store:Object.assign({},store,{todaySet:null}),ink:[...INK.entries()],my:myCards()};
+  const name="akachan-card-"+today()+".json";
+  const file=new File([JSON.stringify(data)],name,{type:"application/json"});
+  const msg=t=>{const el=document.getElementById("bkmsg");if(el)el.textContent=t};
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});msg("書き出しました。");return}
+  }catch(e){if(e&&e.name==="AbortError"){msg("やめました。");return}}
+  const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);msg("ダウンロードしました。");
+}
+document.getElementById("restore").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  const msg=t=>{const el=document.getElementById("bkmsg");if(el)el.textContent=t};
+  let d;try{d=JSON.parse(await f.text())}catch(_){return msg("このファイルは読み込めませんでした。")}
+  if(!d||d.app!=="babycards"||!d.store)return msg("このアプリのバックアップではありません。");
+  if(!confirm("読み込みますか？\n記録とメモは今の内容に足し合わせます。同じカードの書き込みは、読み込む方に置きかわります。"))return;
+  const s=d.store;
+  Object.entries(s.log||{}).forEach(([id,l])=>{const m=store.log[id];if(!m)store.log[id]=l;else{m.n=Math.max(m.n||0,l.n||0);if(String(l.last)>String(m.last))m.last=l.last}});
+  if(s.birth&&!store.birth)store.birth=s.birth;
+  Object.entries(s.srs||{}).forEach(([k,v])=>{const m=store.srs[k];if(!m||String(v.last)>String(m.last))store.srs[k]=v});
+  Object.entries(s.enLog||{}).forEach(([k,v])=>{store.enLog[k]=Math.max(store.enLog[k]||0,v)});
+  Object.entries(s.days||{}).forEach(([k,v])=>{store.days[k]=Math.max(store.days[k]||0,v)});
+  Object.entries(s.memo||{}).forEach(([k,v])=>{if(v&&!store.memo[k])store.memo[k]=v;else if(v&&!store.memo[k].includes(v))store.memo[k]+="\n"+v});
+  Object.entries(s.react||{}).forEach(([k,o])=>{store.react[k]=store.react[k]||{};Object.entries(o).forEach(([a,dt])=>{const c=store.react[k][a];if(!c||String(dt)<String(c))store.react[k][a]=dt})});
+  save();
+  (d.ink||[]).forEach(([id,st])=>{if(Array.isArray(st)&&st.length){INK.set(id,st);dbPut("ink",st,id)}});
+  (d.my||[]).forEach(c=>{if(c&&c.id&&c.cat==="mine"){MY.set(c.id,c);dbPut("my",c)}});
+  render();const el=document.getElementById("bkmsg");if(el)el.textContent="読み込みました。";
+});
+
+/* ---------- ボタン ---------- */
+app.addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]");if(!b||b.disabled)return;
+  const a=b.dataset.a,v=b.dataset.v;
+  switch(a){
+    case "back":stopDwell();writing=false;show=false;document.body.classList.remove("show");back();break;
+    case "stage":store.stage=Number(v);save();render();window.scrollTo(0,0);break;
+    case "today":{const ids=todaySet();go({name:"deck",ids,i:0,title:"今日のカード",plan:true});break}
+    case "grade":gradeCard(curCard().id,Number(v));save();if(view.plan&&view.i<view.ids.length-1)nav(1);else render();break;
+    case "usephoto":store.usePhoto=store.usePhoto===false;save();render();break;
+    case "road":go({name:"road"});break;
+    case "credits":go({name:"credits"});break;
+    case "cat":{const c=CATS.find(x=>x.id===v);go({name:"grid",title:c.name,cat:v});break}
+    case "mine":go({name:"mine"});break;
+    case "rec":go({name:"rec"});break;
+    case "open":{go({name:"deck",ids:view.ids.slice(),i:Number(v),title:view.title||"じぶんのカード"});break}
+    case "jump":go({name:"deck",ids:[v],i:0,title:""});break;
+    case "prev":nav(-1);break;
+    case "next":nav(1);break;
+    case "say":speak(curCard());break;
+    case "enonly":store.enOnly=!store.enOnly;save();render();break;
+    case "sayphc":sayText(curCard().ph);break;
+    case "sayph":sayText(SCENES.find(x=>x.id===view.id).ph[Number(v)][0]);break;
+    case "eng":go({name:"eng"});break;
+    case "scene":store.sceneLog[v]=today();save();go({name:"scene",id:v});break;
+    case "enadd":{const d=today(),n=Math.max(0,(store.enLog[d]||0)+Number(v));if(n)store.enLog[d]=n;else delete store.enLog[d];save();const y=window.scrollY;render();window.scrollTo(0,y);break}
+    case "auto":store.autoSpeak=!store.autoSpeak;save();render();break;
+    case "show":writing=false;show=true;keepAwake(true);render();break;
+    case "unshow":show=false;keepAwake(false);document.body.classList.remove("show");render();break;
+    case "write":writing=!writing;render();window.scrollTo(0,0);break;
+    case "react":{const id=curCard().id,o=store.react[id]||{};if(o[v])delete o[v];else o[v]=today();if(Object.keys(o).length)store.react[id]=o;else delete store.react[id];save();b.classList.toggle("on",!!o[v]);break}
+    case "color":pen.color=v;pen.erase=false;refreshTools();break;
+    case "size":pen.size=Number(v);pen.erase=false;refreshTools();break;
+    case "erase":pen.erase=!pen.erase;refreshTools();break;
+    case "penonly":store.penOnly=!store.penOnly;save();refreshTools();break;
+    case "undo":{if(!undo.length)break;const id=curCard().id;INK.set(id,undo.pop());saveInk(id);inkApi.ctx();break}
+    case "clear":{const id=curCard().id,l=INK.get(id);if(!l||!l.length)break;if(!confirm("このカードの書き込みをぜんぶ消しますか？"))break;undo.push(l.slice());INK.set(id,[]);saveInk(id);inkApi.ctx();break}
+    case "newcard":draft={isNew:true,id:"my-"+Date.now(),cat:"mine",st:0,w:"",en:"",on:"",tip:"",photo:"",created:Date.now()};go({name:"edit"});break;
+    case "editcard":{const c=curCard();draft=Object.assign({en:""},c,{isNew:false});go({name:"edit"});break}
+    case "pick":document.getElementById("pick").click();break;
+    case "nophoto":draft.photo="";render();break;
+    case "savecard":{
+      const w=draft.w.trim();if(!w){document.getElementById("ferr").textContent="ことばを入れてください。";document.getElementById("fw").focus();break}
+      const isNew=draft.isNew,c={id:draft.id,cat:"mine",st:0,w,en:draft.en.trim(),on:draft.on.trim(),tip:draft.tip.trim(),photo:draft.photo,created:draft.created};
+      MY.set(c.id,c);dbPut("my",c);draft=null;
+      if(isNew){writing=true;view={name:"deck",ids:[c.id],i:0,title:"じぶんのカード"};history.replaceState({v:view},"");render();window.scrollTo(0,0)}
+      else{back()}
+      break}
+    case "delcard":{
+      if(!confirm("このカードと書き込みを消しますか？元にもどせません。"))break;
+      const id=draft.id;MY.delete(id);dbDel("my",id);INK.delete(id);dbDel("ink",id);delete store.log[id];delete store.react[id];delete store.memo[id];save();draft=null;
+      history.go(-2);break}
+    case "export":doExport();break;
+    case "import":document.getElementById("restore").click();break;
+    case "reset":if(confirm("見た記録・はじめての記録・自動調整の進み具合を消しますか？\nメモ・書き込み・自作カードは残ります。")){store.log={};store.days={};store.react={};store.srs={};store.grades=[];store.planN=0;store.planEase=false;store.todaySet=null;save();render()}break;
+  }
+});
+addEventListener("keydown",e=>{
+  if(view.name!=="deck"||/INPUT|TEXTAREA/.test(document.activeElement.tagName))return;
+  if(e.key==="ArrowRight")nav(1);else if(e.key==="ArrowLeft")nav(-1);
+  else if(e.key==="Escape"&&show){show=false;keepAwake(false);document.body.classList.remove("show");render()}
+});
+
+function render(){
+  document.body.classList.toggle("show",view.name==="deck"&&show);
+  if(view.name!=="deck"){stopDwell();if(inkCtl){inkCtl.abort();inkCtl=null}writing=false;show=false}
+  switch(view.name){
+    case "home":vHome();break;
+    case "grid":vGrid(view.title,catCards(view.cat),false);break;
+    case "mine":view.title="じぶんのカード";vGrid(view.title,myCards(),true);break;
+    case "deck":vDeck();break;
+    case "edit":if(!draft){view={name:"home"};return render()}vEdit();break;
+    case "rec":vRec();break;
+    case "eng":vEng();break;
+    case "scene":vScene();break;
+    case "road":vRoad();break;
+    case "credits":vCredits();break;
+    default:view={name:"home"};vHome();
+  }
+}
+
+/* ---------- オフライン ---------- */
+let offlineText="オフライン利用：確認中";
+function updateOffline(){const el=document.getElementById("ofl");if(el)el.textContent=offlineText}
+function setupSW(){
+  if(!("serviceWorker" in navigator)){offlineText="オフライン利用：この環境では使えません";return updateOffline()}
+  const hadCtrl=!!navigator.serviceWorker.controller;let reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(hadCtrl&&!reloaded){reloaded=true;location.reload()}});
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{try{r.update()}catch(e){}return navigator.serviceWorker.ready}).then(()=>{offlineText="オフライン利用：準備OK";updateOffline()}).catch(()=>{offlineText="オフライン利用：準備できませんでした";updateOffline()});
+}
+
+/* ---------- 起動 ---------- */
+(async function(){
+  render();
+  db=await openDB();
+  (await all("ink")).forEach(([k,v])=>INK.set(k,v));
+  (await all("my")).forEach(([k,v])=>MY.set(k,v));
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+  render();
+  setupSW();
+})();
+})();
+</script>
+</body>
+</html>
